@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
   int count0 = 0;
   //while (fgets(puzzle, sizeof puzzle, fp) != NULL){
 
- // }
+  // }
  
 
   int64_t start = now();
@@ -40,11 +40,11 @@ int main(int argc, char* argv[])
     if (strlen(puzzle) >= N) {
       ++total;
       char str[128];
-      strcpy(str,puzzle);
-      //*(shudu + count0) = str;
+      //strcpy(str,puzzle);
+      *(shudu + count0) = str;
       count0++;
       //printf("%d \n" , total);
-      input(puzzle);
+      input(*(shudu + count0));
       init_cache();
 
       if (solve(0)) {
