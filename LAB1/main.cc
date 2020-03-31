@@ -12,7 +12,7 @@ using namespace std;
 
 int **shudu;
 int **ans;
-int num_of_thread =2;
+int num_of_thread =4;
 int curr_shudu;
 int num_of_shu;
 int64_t time_start;
@@ -84,15 +84,17 @@ int main(int argc, char* argv[])
   pthread_mutex_unlock(&lock); 
   pthread_mutex_unlock(&lock1); 
  
-  for(int i=0;i<num_of_thread;i++){
-    pthread_join(pid[i],  NULL);
-  }
+  // for(int i=0;i<num_of_thread;i++){
+  //   pthread_join(pid[i],  NULL);
+  // }
 
   pthread_mutex_lock(&lock1); 
   time_end = now();
   double sec = (time_end-time_start)/1000000.0;
-  printf("%f sec %f ms each %d\n", sec, 1000*sec/num_of_shu,num_of_shu);
-
+  printf("num of pthread:%d %f sec %f ms each %d\n",num_of_thread, sec, 1000*sec/num_of_shu,num_of_shu);
+  pthread_mutex_unlock(&lock1); 
+  pthread_mutex_destroy(&lock);
+  pthread_mutex_destroy(&lock1);
   return 0;
 }
 void* work(void* unuse) {
@@ -119,5 +121,5 @@ void* work(void* unuse) {
 
     // 执行完计算任务，自动回去！
   }
-  pthread_mutex_unlock(&lock);
+  //pthread_mutex_unlock(&lock);
 }
