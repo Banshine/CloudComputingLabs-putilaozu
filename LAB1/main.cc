@@ -4,18 +4,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
+#include <pthread.h>
 #include <sys/time.h>
 
 #include "sudoku.h"
+using namespace std;
 
-char **shudu;
-
+int **shudu;
+int **ans;
+int num_of_thread =4;
+int curr_shudu;
+int num_of_shu;
+int64_t time_start;
+int64_t time_end ;
+bool (*solve)(int* ) = solve_sudoku_dancing_links;
+pthread_mutex_t lock;
 int64_t now()
 {
   struct timeval tv;
   gettimeofday(&tv, NULL);
   return tv.tv_sec * 1000000 + tv.tv_usec;
 }
+
+void* work(void * unuse);
 
 int main(int argc, char* argv[])
 {
@@ -25,47 +36,82 @@ int main(int argc, char* argv[])
   char puzzle[128];
   int total_solved = 0;
   int total = 0;
-  bool (*solve)(int) = solve_sudoku_dancing_links;
-
-  shudu = (char**)malloc(1005 * sizeof(128));
-  int count0 = 0;
-  //while (fgets(puzzle, sizeof puzzle, fp) != NULL){
-
-  // }
  
 
-  int64_t start = now();
-  while (fgets(puzzle, sizeof puzzle, fp) != NULL) {
+  vector<char>shu;
+  vector<vector<char> >shus;
 
-    if (strlen(puzzle) >= N) {
-      ++total;
-      char str[128];
-      //strcpy(str,puzzle);
-      *(shudu + count0) = str;
-      count0++;
-      //printf("%d \n" , total);
-      input(*(shudu + count0));
-      init_cache();
-
-      if (solve(0)) {
-        ++total_solved;
-        if (!solved())
-          assert(0);
-      }
-      else {
-        printf("No: %s", puzzle);
-      }
-    }
+  int count0 = 0;
+  while (fgets(puzzle, sizeof puzzle, fp) != NULL){
+      for(int i=0;i<81;i++)
+        shu.push_back(puzzle[i]);
+      shus.push_back(shu);
+      shu.clear();
   }
-  int64_t end = now();
-  double sec = (end-start)/1000000.0;
+  num_of_shu = shus.size();
+  shudu = (int **)malloc(sizeof(int *) * num_of_shu);
+  ans = (int **)malloc(sizeof(int *) * num_of_shu);
+  for(int i=0;i<num_of_shu;i++){
+     shudu[i] = (int *)malloc(sizeof(int) * (81));
+     ans[i] = (int *)malloc(sizeof(int) * (81));
+     for(int j=0;j<81;j++)
+          shudu[i][j] = shus[i][j]-48;
+  }
+ //处理输入
+  // for(int i=0;i<num_of_shu;i++){//查看输入
+  //   for(int j=0;j<81;j++)
+  //   printf("%d",shudu[i][j] );
+  //   printf("\n");
+  // }
+  printf("num_of_shu:%d",num_of_shu);
+  printf("input succeed！\n");
+
+  curr_shudu=0;
+
+  pthread_mutex_init(&lock, NULL);
+  pthread_mutex_lock(&lock); 
+  pthread_t pid[num_of_thread];
+  for(int i=0;i<num_of_thread;i++){
+    time_start = now();  
+    pthread_create(pid + i, NULL, work, NULL);
+  }
+  pthread_mutex_lock(&lock); 
+ 
+  for(int i=0;i<num_of_thread;i++){
+    pthread_join(pid[i],  NULL);
+  }
+
+ 
+  time_end = now();
+  double sec = (time_end-time_start)/1000000.0;
   printf("%f sec %f ms each %d\n", sec, 1000*sec/total, total_solved);
 
   printf("%d \n" , total);
   printf("%d \n" , count0);
 
-  // for(int i=0;i<count0 ; i++)
-  // printf("%s\n", shudu[i]);
   return 0;
 }
+void* work(void* unuse) {
+  int temp;
+   while (true) {
+    //加锁访问任务队列
+    pthread_mutex_lock(&lock);
 
+    if (curr_shudu >= num_of_shu) {
+      //pthread_mutex_unlock(&stop);  // 确保所有的线程都被创建
+      break; 
+    }
+    temp=curr_shudu;
+    curr_shudu++;
+    pthread_mutex_unlock(&lock);
+    int *tmp = new int[81];  //注意没有释放 内存
+    for (int i = 0; i < 81; i++) tmp[i] = shudu[temp][i];
+    if (solve(tmp)) {
+      for (int i = 0; i < 81; i++) ans[temp][i] = tmp[i];
+    } else {
+      printf("no ans\n") ;
+    }
+
+    // 执行完计算任务，自动回去！
+  }
+}
