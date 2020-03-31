@@ -12,7 +12,7 @@ using namespace std;
 
 int **shudu;
 int **ans;
-int num_of_thread =4;
+int num_of_thread =2;
 int curr_shudu;
 int num_of_shu;
 int64_t time_start;
@@ -36,7 +36,6 @@ int main(int argc, char* argv[])
   FILE* fp = fopen(argv[1], "r");  //argv[1] 为输入文件
   char puzzle[128];
   int total_solved = 0;
-  int total = 0;
  
 
   vector<char>shu;
@@ -92,31 +91,25 @@ int main(int argc, char* argv[])
   pthread_mutex_lock(&lock1); 
   time_end = now();
   double sec = (time_end-time_start)/1000000.0;
-  printf("%f sec %f ms each %d\n", sec, 1000*sec/total, total_solved);
-
-  printf("total:%d \n" , total);
+  printf("%f sec %f ms each %d\n", sec, 1000*sec/num_of_shu,num_of_shu);
 
   return 0;
 }
 void* work(void* unuse) {
   int temp;
-   
+  printf( "create thread %d\n",((unsigned)pthread_self() % 100) ); 
    while (true) {
-    //加锁访问任务队列
-    printf( "create thread %d\n",((unsigned)pthread_self() % 100) );
     pthread_mutex_lock(&lock);
-
     if (curr_shudu >= num_of_shu) {
       printf("-------------\n");
-      pthread_mutex_unlock(&lock1);  // 确保所有的线程都被创建
+      pthread_mutex_unlock(&lock1);  
       break; 
     }
 
     temp=curr_shudu;
     curr_shudu++;
-    printf("curr_shudu:%d\n",curr_shudu);
     pthread_mutex_unlock(&lock);
-    int *tmp = new int[81];  //注意没有释放 内存
+    int *tmp = new int[81];  
     for (int i = 0; i < 81; i++) tmp[i] = shudu[temp][i];
     if (solve(tmp)) {
       for (int i = 0; i < 81; i++) ans[temp][i] = tmp[i];

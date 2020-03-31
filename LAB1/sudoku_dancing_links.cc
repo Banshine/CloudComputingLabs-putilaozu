@@ -254,9 +254,6 @@ struct Dance
 
 bool solve_sudoku_dancing_links(int *unused)
 {
-  for(int i=0;i<81;i++)
-    printf("%d",unused[i]);
-  printf("\n");
   Dance d(unused);
   return d.solve();
 }
