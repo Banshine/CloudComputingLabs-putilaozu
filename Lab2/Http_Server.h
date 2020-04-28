@@ -27,10 +27,10 @@ class  HttpServer{
         HttpServer(int id):socketfd(id){}
         ~HttpServer(){}
         void processHttp();
-        void Not_Implemented(string method);//非post,get方法
-        void Not_Found(string url,string method);//文件未找到
-        void response_get(string url,string method);//处理get方法
-        void response_post(string name,string id);//处理post方法
+        void not_effect(string method);//非post,get方法
+        void not_found(string url,string method);//文件未找到
+        void get(string url,string method);//处理get方法
+        void post(string name,string id);//处理post方法
 };
 
 #endif

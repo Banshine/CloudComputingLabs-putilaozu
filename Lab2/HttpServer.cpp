@@ -2,7 +2,7 @@
 #include <cstring>
 #include <linux/tcp.h>
 
-void HttpServer::Not_Implemented(string method){//非GET/POST方法
+void HttpServer::not_effect(string method){//非GET/POST方法
     string entity1="<html><title>501 Not Implemented</title><body bgcolor=ffffff>\n Not Implemented\n";
     string entity2="<p>Does not implement this method: "+method+"\n<hr><em>HTTP Web Server</em>\n</body></html>\n";
     string entity=entity1+entity2;
@@ -13,7 +13,7 @@ void HttpServer::Not_Implemented(string method){//非GET/POST方法
     write(socketfd, buf, strlen(buf));
 }
 
-void HttpServer::Not_Found(string url,string method){//404错误
+void HttpServer::not_found(string url,string method){//404错误
     string entity1="<html><title>404 Not Found</title><body bgcolor=ffffff>\n Not Found\n";
     string file="<p>Could not find this file: "+url+"\n";
     string entity2="<hr><em>HTTP Web Server</em>\n</body></html>\n";
@@ -28,7 +28,7 @@ void HttpServer::Not_Found(string url,string method){//404错误
     write(socketfd, buf, strlen(buf));
 }
 
-void HttpServer::response_get(string url,string method){
+void HttpServer::get(string url,string method){
     string s="./html";
     if(url.find(".")==string::npos){
         if(url.length()==0||url[url.length()-1]=='/')
@@ -39,7 +39,7 @@ void HttpServer::response_get(string url,string method){
     
     int filefd=open(s.c_str(),O_RDONLY);
     if(filefd<0){//不存在该文件
-       Not_Found(url,method);
+       not_found(url,method);
     }
     else{
         struct stat filestat;
@@ -52,7 +52,7 @@ void HttpServer::response_get(string url,string method){
     }
 }
 
-void HttpServer::response_post(string name,string id){
+void HttpServer::post(string name,string id){
     string entity1="<html><title>POST Method</title><body bgcolor=ffffff>\n";
     string str2="Your name: "+name+"\nYour id: "+id+"\n";
     string entity2="<hr><em>HTTP Web Server</em>\n</body></html>\n";
@@ -70,14 +70,11 @@ void HttpServer::processHttp(){
         bool is_keepalive=true;//持久连接标志
         char buf[BUFFER_SIZE];
         int size=0;
-        //size=read(socketfd,buf,BUFFER_SIZE-1);
         size=recv(socketfd,buf,BUFFER_SIZE-1,0);
-        //cout<<"size = "<<size<<endl;
         if(size>0){
             buf[size]='\0';
             strbuf+=string(buf);
-            //cout<<strbuf<<endl;
-            //cout<<buf<<endl;
+         
             //处理所有的http请求报文
             while(strbuf.find("HTTP/")!=string::npos){
                 //首先判断strbuf中的有没有完整报文
@@ -118,7 +115,7 @@ void HttpServer::processHttp(){
                     }//提取方法
 
                     if(method!="GET"&&method!="POST"){
-                        Not_Implemented(method);
+                        not_effect(method);
                         continue;
                     }//若既不是GET也不是POST，返回501
 
@@ -129,25 +126,25 @@ void HttpServer::processHttp(){
                     ++pos;//提取URL
 
                     if(method=="GET"){
-                        response_get(url,method);
+                        get(url,method);
                     }
                     else if(method=="POST"){
                         
                         if(url!="/Post_show"){
-                            Not_Found(url,method);
+                            not_found(url,method);
                             continue;
                         }
                         string entity=httprequest.substr(postPos,httprequest.length()-postPos);
-                        //cout<<entity<<endl;
+                      
 
                         //请求体按照Name=xxx&ID=xxx排列时才处理
                         int namepos=entity.find("Name="),idpos=entity.find("&ID=");
                         if(namepos==-1||idpos==-1||idpos<=namepos){//请求体中存在Name和ID并且按照Name、ID排列
-                            Not_Found(url,method);
+                            not_found(url,method);
                             continue;
                         }
                         if(entity.find("=",idpos+4)!=string::npos){
-                            Not_Found(url,method);
+                            not_found(url,method);
                             continue;
                         }
                         
@@ -155,7 +152,7 @@ void HttpServer::processHttp(){
                         
                         name=entity.substr(namepos+5,idpos-namepos-5);
                         id=entity.substr(idpos+4);
-                        response_post(name,id);
+                        post(name,id);
                     }
                     if(httprequest.find("Connection: close")!=string::npos){//判断是否是持久连接
                         is_keepalive=false;

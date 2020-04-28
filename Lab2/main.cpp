@@ -19,7 +19,6 @@ int main(int argc, char *argv[])
     memset(&servaddr,0,sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(port);
-    //servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_addr.s_addr = inet_addr(ip.c_str());
     //创建socket,TCP,IPv4网络
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -54,7 +53,7 @@ int main(int argc, char *argv[])
       //接受连接
       connfd = accept(sockfd, (struct sockaddr *)&client, &len);
       if(connfd!=-1){
-        HttpServer task (connfd);
+        HttpServer task(connfd);
         //向线程池添加任务
         pool.queue_append(task);
       }
